@@ -4,6 +4,8 @@
 
 ## Examples
 
+Use these examples as a starting place for your project. 
+
 1. https://soggybag.github.io/d3-examples/index-1.html
 1. https://soggybag.github.io/d3-examples/index-2.html
 1. https://soggybag.github.io/d3-examples/index-3.html
