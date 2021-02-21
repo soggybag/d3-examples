@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Line Graphs</title>
+		<style>
+			/* Put the box in the center of the page */
+			body, html {
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		</style>
+	</head>
+	<body>
+
+		<svg id="svg" width="600" height="500"></svg>
+
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<script>
+			/*
+			
+			Line graph.
+
+			This examples pulls the percipitation data by state. 
+			The dataset has 5810 rows! Which I'm assuming has data 
+			from all 50 states. 
+
+			I added a function to filter data for a one state. This 
+			shows about 250 rows per state. 
+
+			The data includes: 	// state, date, precipitation
+			
+			*/
+
+			// Load data 
+			d3.csv('data/precipitation.csv').then(handleData)
+
+			// Handle loaded data with a function
+			function handleData(data) {
+				// We need a horizontal and vertical scale 
+
+				function getDataForState(data, state) {
+					const arr = data
+						.filter(d => d.state === state)
+						.filter(d => !isNaN(d.precipitation))
+					arr.forEach(d => d.precipitation = parseFloat(d.precipitation))
+					return arr
+				}
+
+				const caData = getDataForState(data, 'BA')
+				console.log(caData)
+
+				// Make a Scale for the horizontal axis
+				const xscale = d3.scaleLinear()
+					.domain([0, caData.length])
+					.range([0, 600])
+
+				// make a vertical scale 
+				const yscale = d3.scaleLinear()
+					.domain(d3.extent(caData, d => d.precipitation))
+					.range([0, 600])
+
+				// We need a generator for the line
+				// Make a line generator
+				const linegen = d3.line()
+					.x((d, i) => xscale(i))
+					.y(d => yscale(d.precipitation))
+					.curve(d3.curveLinear)
+				
+				// Draw something on our svg
+				d3.select('#svg')
+					.style('border', '1px solid')
+					.append('path')
+					.attr('d', linegen(data))
+					.attr('stroke-width', 3)
+					.attr('stroke', 'cornflowerblue')
+					.attr('fill', 'none')
+			}	
+			
+			/*
+			
+			Challenges - 
+
+			1. Show percipitation for several states
+			2. Add an axis see index-2.html
+			3. Use another dataset 
+			4. Change this to an area type chart
+
+			*/
+		</script>
+	</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Line Graphs</title>
+		<style>
+			/* Put the box in the center of the page */
+			body, html {
+				/* height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center; */
+			}
+		</style>
+	</head>
+	<body>
+
+		<svg id="svg" width="600" height="600"></svg>
+
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<script>
+			/* 
+				
+				Treemap: This tree map displays a hierarchy. 
+
+				Your object should look like this: 
+				{
+					name: '...',
+					children: [
+						{ name: '...', children: [...] }
+					]
+				}
+
+				Every object has a name and children. All children have names and
+				an array children. 
+
+				This example extracts the styles from the ramen dataset. The size of
+				of the boxes is representing how many varieties of are present in 
+				each style. 
+
+				The root object looks like this: 
+				 {
+					 name: 'Ramen',
+					 children; [
+						 {
+							 name: 'Cup',
+							 children: [],
+							 value: 450
+						 },
+						 {
+							 name: 'Pack',
+							 children: [],
+							 value: 1531
+						 },
+						 {
+							 ...
+						 }
+					 ]
+				 }
+
+				 You can try combining the data in the Ramen set in different ways. 
+				 Ask yourself how many varieties, how many brands, how many countries
+				 are represented in the list.
+				
+			*/
+
+			// Load data 
+			d3.csv('data/ramen-ratings.csv')
+				.then(handleData)
+			// Handle loaded data with a function
+			function handleData(data) {
+				// Review #, Brand, Variety, Style, Country, Stars, Top Ten
+
+				// To get started I made unique lists of 
+				// Find unique 
+				function findUnique(data, prop) {
+					return Array.from(new Set(data.map(obj => obj[prop])))
+				}
+
+				// Review #, Brand, Variety, Style, Country, Stars, Top Ten
+				const styleNames = findUnique(data, 'Style')
+				const varietyNames = findUnique(data, 'Variety')
+				const countryNames = findUnique(data, 'Country')
+				const brandNames = findUnique(data, 'Brand')
+
+				console.log(countryNames)
+
+				// Create the ramen hierarchy
+				const ramen = {
+					name: 'Ramen',
+					children: styleNames.map(name => ({
+						name, 
+						children: [],
+						value: data.filter(d => d.Style === name).length
+					}))
+				}
+
+				// Create a color scale
+				const colorScale = d3.scaleSequential()
+					.domain([0, styleNames.length])
+					.interpolator(d3.interpolateViridis)
+
+				// Create a hierarchy 
+				let root = d3.hierarchy(ramen)
+
+				// Make a treemap
+				const treemapLayout = d3.treemap()
+				treemapLayout.size([600, 600]) // Set the size
+				.paddingOuter(10)							 // Set the padding
+				.paddingInner(10)
+				.paddingTop(30)
+
+				// Must call sum! 
+				root.sum(d => d.value)
+				treemapLayout(root)
+
+				// Set some styles on the main svg 
+				const svg = d3.select('#svg')
+					.append('g')
+					.selectAll('g')
+					.data(root.descendants())
+					.enter()
+					// append of groups
+					.append('g')
+					// Position each group
+					.attr('transform', d => `translate(${d.x0}, ${d.y0})`)
+
+				// Append a rect to each group
+				svg
+					.append('rect')
+					.attr('width', d => d.x1 - d.x0)
+					.attr('height', d => d.y1 - d.y0)
+					.attr('fill', (d, i) => colorScale(i))
+					.attr('opacity', '0.53')
+				
+				// Add a text element to group
+				svg 
+					.append('text')
+					.attr('dx', 10)
+					.attr('dy', 20)
+					.text(d => d.data.name)
+					.attr('font-family', 'Helvetica')
+					.attr('fill', '#fff')
+
+			}
+
+	</script>
+	</body>
+</html>

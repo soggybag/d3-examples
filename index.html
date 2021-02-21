@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Line Graphs</title>
+		<style>
+			/* Put the box in the center of the page */
+			body, html {
+				/* height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center; */
+			}
+		</style>
+	</head>
+	<body>
+
+		<svg id="svg" width="600" height="600"></svg>
+
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<script>
+			/* 
+				
+				Treemap: This tree map displays a hierarchy. 
+
+				Your object should look like this: 
+				{
+					name: '...',
+					children: [
+						{ name: '...', children: [...] }
+					]
+				}
+
+				Every object has a name and children. All children have names and
+				an array children. 
+
+				This example extracts the styles from the ramen dataset. The size of
+				of the boxes is representing how many varieties of are present in 
+				each style. 
+
+				The root object looks like this: 
+				 {
+					 name: 'Ramen',
+					 children; [
+						 {
+							 name: 'Cup',
+							 children: [],
+							 value: 450
+						 },
+						 {
+							 name: 'Pack',
+							 children: [],
+							 value: 1531
+						 },
+						 {
+							 ...
+						 }
+					 ]
+				 }
+
+				 You can try combining the data in the Ramen set in different ways. 
+				 Ask yourself how many varieties, how many brands, how many countries
+				 are represented in the list.
+				
+			*/
+
+			// Load data 
+			d3.csv('data/ramen-ratings.csv')
+				.then(handleData)
+			// Handle loaded data with a function
+			function handleData(data) {
+				// Review #, Brand, Variety, Style, Country, Stars, Top Ten
+
+				// Find unique 
+				const varietyNames = Array.from(new Set(data.map(obj => obj.Variety)))
+				const styleNames = Array.from(new Set(data.map(obj => obj.Style))) // .filter(n => n !== '')
+				const countryNames = Array.from(new Set(data.map(obj => obj.Country)))
+				const brandNames = Array.from(new Set(data.map(o => o['Brand'])))
+
+				console.log(countryNames)
+
+				const ramen = {
+					name: 'Ramen',
+					children: styleNames.map(name => ({
+						name, 
+						children: [],
+						value: data.filter(d => d.Style === name).length
+					}))
+				}
+
+				console.log(ramen)
+
+				const colorScale = d3.scaleSequential()
+					.domain([0, styleNames.length])
+					.interpolator(d3.interpolateViridis)
+
+				// This example packs Ramen by style
+				let root = d3.hierarchy(ramen)
+
+				const treemapLayout = d3.treemap()
+				treemapLayout.size([600, 600])
+				.paddingOuter(10)
+				.paddingInner(10)
+				.paddingTop(30)
+
+				root.sum(d => d.value)
+				treemapLayout(root)
+
+				const svg = d3.select('#svg')
+					.append('g')
+					.selectAll('g')
+					.data(root.descendants())
+					.enter()
+					.append('g')
+					.attr('transform', d => `translate(${d.x0}, ${d.y0})`)
+
+				svg
+					.append('rect')
+					.attr('width', d => d.x1 - d.x0)
+					.attr('height', d => d.y1 - d.y0)
+					.attr('fill', (d, i) => colorScale(i))
+					.attr('opacity', '0.53')
+				
+				svg 
+					.append('text')
+					.attr('dx', 10)
+					.attr('dy', 20)
+					.text(d => d.data.name)
+					.attr('font-family', 'Helvetica')
+					.attr('fill', '#fff')
+
+			}
+
+	</script>
+	</body>
+</html>

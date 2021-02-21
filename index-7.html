@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Line Graphs</title>
+		<style>
+			/* Put the box in the center of the page */
+			body, html {
+				/* height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center; */
+			}
+	
+			/* set the CSS */
+		
+			.node circle {
+				fill: #fff;
+				stroke: steelblue;
+				stroke-width: 3px;
+			}
+		
+			.node text {
+				font: 12px sans-serif;
+			}
+		
+			.node--internal text {
+				text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+			}
+		
+			.link {
+				fill: none;
+				stroke: #ccc;
+				stroke-width: 2px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<svg id="svg" width="1000" height="1800"></svg>
+
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<script>
+			/* 
+				Layout: Tree 
+
+				This a tough one. To make the tree you need to arrange the data in
+				a tree structure. You'll need to think about how the children 
+				relate to the parent. 
+
+				Your object should look like this: 
+				{
+					name: '...',
+					children: [
+						{ name: '...', children: [...] }
+					]
+				}
+
+				Every object has a name and children array. All children have names and
+				an array children. See the pattern.
+
+				Here is an example worth looking at: 
+				http://bl.ocks.org/robschmuecker/6afc2ecb05b191359862
+				https://bl.ocks.org
+
+				The example uses the Ramen data. The data includes the follow fields: 
+
+				Review #, Brand, Variety, Style, Country, Stars, Top Ten
+
+				To make a tree I needed to rearrange the data so that it was a 
+				hierarchy in the form shown above. I arranged the data on style which 
+				is cup, bowl, pack etc. 
+
+				- Ramen
+					- Style 
+						- brand/varieties
+
+				{
+					name: "Ramen",
+					children: [
+						{ 
+							name: 'cup', children: [], 
+							name: 'bowl', children: [],
+							...
+						}
+					]
+				}
+
+				The sort data is a single list with not hierarchy. You need to 
+				arrange the data!
+
+				Note! There seems to be a lot of duplicates in the list. removing these
+				would clean things up a lot! 
+
+				Note! I had a hard time controlling the spacing of nodes in the chart. 
+				Not sure what I'm missing. This might require some research. 
+				
+			*/
+
+			// Load data 
+			d3.csv('data/ramen-ratings.csv')
+				.then(handleData)
+			// Handle loaded data with a function
+			function handleData(data) {
+				
+				// To get started I made unique lists of 
+				// Find unique 
+				function findUnique(data, prop) {
+					return Array.from(new Set(data.map(obj => obj[prop])))
+				}
+
+				// Review #, Brand, Variety, Style, Country, Stars, Top Ten
+				const styleNames = findUnique(data, 'Style')
+				const varietyNames = findUnique(data, 'Variety')
+				const countryNames = findUnique(data, 'Country')
+				const brandNames = findUnique(data, 'Brand')
+
+				// TODO: Create a hieracrhy 
+				// Ramen
+				//   - Brand
+				//     - Style <- show styles for each brand
+
+				console.log(styleNames)
+
+				// TODO: There are many duplicates for each ramen! 
+				// The duplicates need to be removed! 
+
+				// Here we create a top level of styles and children matching the style
+				const styles = styleNames.reduce((acc, name) => {
+					acc[name] = {}
+					acc[name].children = data
+						.filter(d => d.Style === name )
+						.map(d => ({name: d['Brand']}))
+					return acc
+				}, {})
+
+				// Investigate this for duplicates. Take a look in the console
+				// look at the children array under each style. Since we used 
+				// Brand there are many duplicates. 
+				console.log(styles) 
+
+
+				// Make hierarchical object
+				const ramen = {
+					name: 'Ramen',
+					children: styleNames.map(name => {
+						return {
+							name, 
+							children: styles[name].children
+						}
+					})
+				}
+
+				// Check the final hierarchy object here. This 
+				// is what D3 will be starting with. 
+
+				// console.log(ramen)
+
+				
+				// Set the area to work with. NOTE! I had a lot of trouble 
+				// controlling the size. I'm obviously missing something. 
+				const width = 650
+				const height = 2800
+
+				// Create a treemap
+				const treemap = d3.tree()
+					.size([height, width])
+
+				// Create a d3 hierarchy
+				let nodes = d3.hierarchy(ramen)
+				// Add the hierarchy to the treemap to get the nodes
+				nodes = treemap(nodes)
+				
+				// Start drawing! 
+				// Style the svg container
+				const svg = d3.select('#svg')
+					.style('border', '1px solid')
+
+				// Append a group <g> to act as a container
+				const g = svg.append('g')
+					.attr('transform', `translate(50, 50)`)
+
+				// Draw the links
+				// Find everything with class `link'
+				const link = g.selectAll('.link')
+					// Use the descendants
+					.data(nodes.descendants().slice(1))
+					.enter()
+					// Append a path
+					.append('path')
+					// Add a class name
+					.attr('class', 'link')
+					// Set the style
+					.style('stroke', d => d.data.level)
+					// Add some data to the path this draws the line
+					// The examples I found all seemed to be drawing with raw data. 
+					// I feel like there should be native d3 method for this?
+					.attr('d', d => {
+						return `M${d.y},${d.x}C${(d.y + d.parent.y) / 2},${d.x} ${(d.y + d.parent.y) / 2},${d.parent.x} ${d.parent.y},${d.parent.x}`
+					});
+
+				
+				// Draw the nodes. These are the points where links meet
+				// Adds each node as a group
+				const node = g.selectAll('.node')
+					.data(nodes.descendants())
+					.enter().append('g')
+					.attr('class', d => `node ${d.children ? ' node--internal' : ' node--leaf'}`)
+					.attr('transform', d => `translate(${d.y},${d.x})`);
+
+
+				// You can use this to add a circle at each node. 
+				// // adds the circle to the node
+				node.append('circle')
+					// Set the size of the circle
+					.attr('r', 5)
+					// You could use some data to set the size of the cirles
+					// You'll need to add this data to the hierarchy! 
+					//  .attr("r", d => d.data.value)
+					.style("stroke", 'tomato')
+					// The stroke could be based on data...
+					// .style("stroke", d => d.data.type)
+					// Set the fill
+					.style('fill', '');
+					// Fill could be based on data
+					// 	.style("fill", d => d.data.level);
+
+				// Add the text label
+				// append a text element
+				node.append('text')
+					// Position the text
+					.attr('dy', '0.35em')
+					// Position the text to the left or the right of the node
+					.attr('x', d => d.children ? (d.data.value + 5) * -1 : d.data.value + 5)
+					.attr('y', d => d.children && d.depth !== 0 ? -(d.data.value + 5) : d)
+					.style('text-anchor', d => d.children ? 'end' : 'start')
+					// Set the text in the label
+					.text(d => d.data.name);
+			}
+
+
+			/*
+			
+			Challenges - 
+
+			1. Filter the Ramen brands this should clean up the tree
+			2. Arrange varieties under brands
+				- Ramen
+					- Styles 
+						- Brands 
+							- Varieties <-- new level
+			3. Rearrnge the data. Here are a few ideas. 
+
+				Show what styles of Ramen are prefered by country
+
+				- Ramen 
+					- Country <-- Organize by country
+						- Styles 
+							- Brands
+				
+			4. Use the rating data in your visualization. To do this 
+			   you need to add the data to the original object: 
+
+				{
+					name: "Ramen",
+					children: [
+						{
+							name: 'cup', children: [
+								{ 
+									name: '...',
+									rating: '4', <-- Add a rating or more values to each leaf
+									topTen: no
+								}, 
+								{
+									...
+								}
+							], 
+							name: 'bowl', children: [],
+							...
+						}
+					]
+				}				 
+
+			*/
+
+	</script>
+	</body>
+</html>

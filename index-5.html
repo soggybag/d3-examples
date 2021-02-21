@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Line Graphs</title>
+	<style>
+		/* Put the box in the center of the page */
+		body,
+		html {
+			height: 100%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+	</style>
+</head>
+
+<body>
+
+	<svg id="svg" width="600" height="500"></svg>
+
+	<script src="https://d3js.org/d3.v6.min.js"></script>
+	<script>
+		/* 
+		
+		Layout: Pack
+
+		Using circles to show relative sizes and amounts or values. 
+		The circles will be packed into the area defined. 
+		
+		*/
+
+		// Load data 
+		d3.json('data/monthlySales.json')
+			.then(handleData)
+
+		// Handle loaded data with a function
+		function handleData(data) {
+
+			// Create a color scale 
+			const colorScale = d3.scaleSequential(d3.interpolateRainbow)
+				.domain(d3.extent(data, d => d.month))
+
+
+			// Pack - Create a pack function
+			const pack = d3.pack()
+				.size([600, 500]) // Set the size of the area
+				.padding(10)		  // define some padding between each circle
+
+
+			// Create a Hierarchy of data
+			// Creates a new data object in a hierarchy
+			const root = d3.hierarchy({ children: data })
+				.sum(d => d.sales) // Must call sum before pack()
+
+
+			// Create a root node for d3 to draw
+			const rooNode = pack(root) // Must call sum() first! 
+			// This adds new properties to the root data
+
+
+			// Start drawing! 
+			d3.select('#svg')
+				.style('border', '1px solid')
+				// Use Groups for each element
+				.selectAll('g')
+				// Data is the leaves of the hierarchical root node
+				.data(rooNode.leaves())
+				.join('g') // Not sure but you need this!
+				// Position each node using x and y 
+				.attr('transform', d => `translate(${d.x}, ${d.y})`)
+				// Add a circle to each group
+				.append('circle')
+				// Set the radius
+				.attr('r', d => d.r)
+				// Set the color of each circle
+				.attr('fill', d => {
+					// Note! d is hieracty data and the source data is on the data property!
+					return colorScale(d.data.sales)
+				})
+
+
+			// Add a text node to each group
+			d3.select('#svg')
+				// find each group
+				.selectAll('g')
+				.data(rooNode.leaves())
+				.join('g')
+				// Add a text node
+				.append('text')
+				// Set the text
+				.text(d => d.data.sales)
+				// Set the font 
+				.attr('font-family', 'Helvetica')
+				// Position the text in the center
+				.style('text-anchor', 'middle')
+				.style('alignment-baseline', 'middle')
+
+		}
+
+			/* 
+			
+			Challenges 
+
+			1. Use another dataset to show relative amounts or values. 
+			2. Add a legend
+			3. Add more labels
+			4. Play with the color scale
+
+			*/
+	</script>
+</body>
+</html>

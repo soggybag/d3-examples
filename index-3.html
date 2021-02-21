@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Line Graphs</title>
+		<style>
+			/* Put the box in the center of the page */
+			body, html {
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		</style>
+	</head>
+	<body>
+
+		<svg id="svg" width="600" height="500"></svg>
+
+		<script src="https://d3js.org/d3.v6.min.js"></script>
+		<script>
+			/* 
+			
+			Show an area graph. The area graph is like a line 
+			graph but fills in the area 
+			
+			*/
+
+			// Load data
+				d3.csv('data/precipitation.csv').then(handleData)
+
+				// Handle loaded data with a function
+				function handleData(data) {
+					// Read about d3 date/time scale
+					// https://bl.ocks.org/d3noob/f46a355d35077a7dc12f9a97aeb6bc5d
+					// Dates are formatted: 30/11/2017
+					const parseTime = d3.timeParse('%d/%m/%Y')
+					// parse the dates for d3
+					data.forEach(d => d.date = parseTime(d.date))
+
+					// This helper function filters data for a single state
+					function getDataForState(data, state) {
+						const arr = data
+							.filter(d => d.state === state)
+							.filter(d => !isNaN(d.precipitation))
+						arr.forEach(d => d.precipitation = parseFloat(d.precipitation))
+						return arr
+					}
+
+					// Get state data for single state. 
+					// Challenge - get a list of state codes in the list
+					const stateData = getDataForState(data, 'RR')
+					console.log(stateData)
+
+					// Define some dimensions
+					const width = 600
+					const height = 500
+					const margin = 50
+
+					// Setup the main element
+					const svg = d3.select('#svg')
+						.attr('width', width)
+						.attr('height', height)
+					svg.style('border', '1px solid')
+
+					// Make a group (<g>) to hold the line graph
+					// Move the group into the center.
+					// This 'graph' element is a group that will contain the line graph
+					const graph = svg.append('g')
+						.attr('transform', `translate(${margin}, ${margin})`)
+
+					// Make some scales to work with the data
+
+					// Make a time scale for the horizontal axis
+					const xscale = d3.scaleTime()
+						// dates must be formatted!
+						.domain(d3.extent(stateData, d => d.date))
+						// Range takes into account the width and margin
+						.range([0, width - margin * 2])
+						.nice() // rounds the scale off and makes it look nicer
+
+					// Make a vertical scale based on the precipitation 
+					const yscale = d3.scaleLinear()
+						.domain(d3.extent(stateData, d => d.precipitation))
+						.range([height - margin * 2, margin])
+						.nice() // rounds the scale off and makes it look nicer
+
+
+
+					// Use the area generator to make a function that 
+					// draws the line graph as a shape. 
+					const linegen = d3.area()
+						.x((d, i) => xscale(d.date)) 			// position on the horizontal axis
+						.y0(d => yscale(d.precipitation)) // vertical position on the top of the chart
+						.y1(height - margin * 2)	 				// vertical position at the bottom of the chart
+						.curve(d3.curveBasis)             // curve type 
+
+					// Draw the line into the graph group!
+					graph.append('path')
+						.attr('d', linegen(stateData))  // Use state data! 
+						.attr('fill', 'cornflowerblue') // Be sure to set a fill
+
+					// Make some axis. The axis shows numbers of words 
+					// along an edge of the graph. 
+
+					// Generate an axis for the bottom
+					// This makes generator.
+					const bottomAxis = d3.axisBottom(xscale)
+
+					// Make another axis for the left
+					// This makes a generator
+					const leftAxis = d3.axisLeft(yscale)
+
+					// Append a group, translate, and add the axis
+					svg.append('g')
+						// Position the group
+						.attr('transform', `translate(${margin}, ${height - margin})`)
+						// generate the axis in the group
+						.call(bottomAxis)
+
+					// Append the group, transform, and add the axis
+					svg.append('g')
+						.attr('transform', `translate(${margin}, ${margin})`)
+						.call(leftAxis)
+				}		
+
+				/*
+				
+				Challenges - 
+
+				Look at area here: 
+				https://www.d3indepth.com/shapes/
+
+				1. Shows a legend displaying the sttaes in the data
+				2. Data is shown in months expand the graph to display data for one year
+				3. Show on year 21 months with the data stacked by year: https://www.data-to-viz.com/graph/stackedarea.html
+				4. Show all states as a ridge plot something like: https://www.data-to-viz.com/graph/ridgeline.html
+				5. Add a button to select the state data displayed. 
+
+				*/
+		</script>
+	</body>
+</html>

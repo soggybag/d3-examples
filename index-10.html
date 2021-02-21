@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <style>
+      body {
+        color: #000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-weight: lighter;
+      }
+      .node {
+        fill: steelblue;
+        stroke: none;
+      }
+      
+      .link {
+        fill: none;
+        stroke: #ccc;
+        stroke-width: 1px;
+      }
+      </style>
+  </head>
+  <body>
+
+    <section>
+      <h1>Ramen Brands</h1>
+      <svg id="ramen-brands" width="800" height="500">
+        <!-- Ramen Brands -->
+      </svg>
+    </section>
+    
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+
+      /*
+      
+      Ramen Brands arc
+
+      This example creates an arc or pie out of ramen brands. 
+      
+      */
+
+        d3.csv('data/ramen-ratings.csv')
+          .then(data => {
+            // console.log(data)
+            const width = 800
+            const brands = Array.from(new Set(data.map(d => d.Brand)))
+            const brandData = {}
+            data.forEach((d, i) => {
+              if (brandData[d.Brand] === undefined) {
+                brandData[d.Brand] = { name: d.Brand, count: 0, stars: 0, country: '' }
+              }
+              brandData[d.Brand].count += 1
+              brandData[d.Brand].country = d.Country
+              brandData[d.Brand].stars += isNaN(parseFloat(d.Stars)) ? 2 : parseFloat(d.Stars)
+            })
+
+            byBrand = []
+
+            for (let k in brandData) {
+              const brand = brandData[k]
+              brand.starsAverage = brand.stars / brand.count
+              byBrand.push(brand)
+            }
+
+            // console.log(byBrand)
+            const filteredBrands = byBrand.filter(d => d.count > 9)
+            
+            const pieGen = d3.pie()
+            
+            const brandCounts = filteredBrands.map(d => d.count)
+            const arcData = pieGen(brandCounts)
+            const arcGen = d3.arc()
+              .innerRadius(50)
+              .outerRadius(200)
+              .padAngle(0.01)
+
+            d3.select('#ramen-brands')
+              .style('border', '1px solid #000')
+              .append('g')
+              .selectAll('path')
+              .data(arcData)
+              .enter()
+              .append('path')
+              .attr('d', arcGen)
+              .attr('fill', `hsl(${Math.random() * 360}, 50%, 50%)`)
+              .attr('transform', 'translate(250, 250)')
+
+          })
+
+    </script>
+  </body>
+</html>
