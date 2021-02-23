@@ -127,9 +127,13 @@
 				// Here we create a top level of styles and children matching the style
 				const styles = styleNames.reduce((acc, name) => {
 					acc[name] = {}
-					acc[name].children = data
-						.filter(d => d.Style === name )
-						.map(d => ({name: d['Brand']}))
+					const brandsForStyle = Array.from(new Set(data
+						.filter(d => d.Style === name)
+						.map(o => o.Brand)))
+					
+					console.log(brandsForStyle)
+
+					acc[name].children = brandsForStyle.map(d => ({ name: d }))
 					return acc
 				}, {})
 
@@ -220,18 +224,17 @@
 					// The stroke could be based on data...
 					// .style("stroke", d => d.data.type)
 					// Set the fill
-					.style('fill', '');
+					.style('fill', '')
 					// Fill could be based on data
-					// 	.style("fill", d => d.data.level);
+					// .style("fill", d => d.data.level);
 
 				// Add the text label
 				// append a text element
 				node.append('text')
 					// Position the text
 					.attr('dy', '0.35em')
-					// Position the text to the left or the right of the node
-					.attr('x', d => d.children ? (d.data.value + 5) * -1 : d.data.value + 5)
-					.attr('y', d => d.children && d.depth !== 0 ? -(d.data.value + 5) : d)
+					// Nodes with children get moved to the left otherwise to the right
+					.attr('dx', d => d.children === undefined ? 10 : -10)
 					.style('text-anchor', d => d.children ? 'end' : 'start')
 					// Set the text in the label
 					.text(d => d.data.name);
