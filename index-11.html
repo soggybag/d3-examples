@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title></title>
+	<style>
+		body {
+			color: #000;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+			font-weight: lighter;
+		}
+
+		.node {
+			fill: steelblue;
+			stroke: none;
+		}
+
+		.link {
+			fill: none;
+			stroke: #ccc;
+			stroke-width: 1px;
+		}
+	</style>
+</head>
+
+<body>
+
+
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+	<script src="https://d3js.org/d3.v6.min.js"></script>
+	<script src="https://d3js.org/d3-array.v2.min.js"></script>
+	<script src="https://d3js.org/d3-geo.v2.min.js"></script>
+	
+	<script>
+		projection = d3.geoAlbersUsa().scale(1300).translate([487.5, 305])
+		const html = d3.select('body')
+			.append('svg')
+			.attr('viewBox', '0 0 975 610')
+			.append('g')
+			.attr('fill', 'none')
+			.attr('stroke', '#000') // <g fill="none" stroke="#000" stroke-linejoin="round" stroke-linecap="round">
+			.append('path', )
+			// .attr('path', `
+			// 	<path stroke="#aaa" stroke-width="0.5" d="${path(topojson.mesh(us, us.objects.counties, (a, b) => a !== b && (a.id / 1000 | 0) === (b.id / 1000 | 0)))}"></path>
+			// 	<path stroke-width="0.5" d="${path(topojson.mesh(us, us.objects.states, (a, b) => a !== b))}"></path>
+			// 	<path d="${path(topojson.feature(us, us.objects.nation))}"></path>`)
+
+
+		
+	</script>
+</body>
+
+</html>

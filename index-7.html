@@ -94,6 +94,21 @@
 				Note! I had a hard time controlling the spacing of nodes in the chart. 
 				Not sure what I'm missing. This might require some research. 
 				
+				How should ramen data be arranged? 
+				- Review #
+				- Brand
+				- Variety
+				- Style
+				- Country
+				- Stars
+				- Top Ten
+
+				- Country
+					- Style
+						- Brand 
+							- Variety
+								- Stars 
+
 			*/
 
 			// Load data 
@@ -119,29 +134,26 @@
 				//   - Brand
 				//     - Style <- show styles for each brand
 
-				console.log(styleNames)
-
 				// TODO: There are many duplicates for each ramen! 
 				// The duplicates need to be removed! 
 
 				// Here we create a top level of styles and children matching the style
 				const styles = styleNames.reduce((acc, name) => {
 					acc[name] = {}
+
 					const brandsForStyle = Array.from(new Set(data
 						.filter(d => d.Style === name)
 						.map(o => o.Brand)))
-					
-					console.log(brandsForStyle)
-
 					acc[name].children = brandsForStyle.map(d => ({ name: d }))
+
 					return acc
 				}, {})
 
 				// Investigate this for duplicates. Take a look in the console
 				// look at the children array under each style. Since we used 
-				// Brand there are many duplicates. 
-				console.log(styles) 
-
+				// Brand there are many duplicates.
+				
+				// console.log(styles) 
 
 				// Make hierarchical object
 				const ramen = {
@@ -237,7 +249,10 @@
 					.attr('dx', d => d.children === undefined ? 10 : -10)
 					.style('text-anchor', d => d.children ? 'end' : 'start')
 					// Set the text in the label
-					.text(d => d.data.name);
+					.text(d => { 
+						console.log(d)
+						return `${d.data.Stars} ${d.data.name}`
+					});
 			}
 
 
